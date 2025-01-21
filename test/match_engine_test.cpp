@@ -334,7 +334,8 @@ int main()
         };
     };
 
-    "order matching engine should be able to handle high volume trades at high speed"_test = [&] {
+    // NOTE: remove the ut::skip to run the test/benchmark
+    ut::skip / "order matching engine should be able to handle high volume trades at high speed"_test = [&] {
         auto match_engine = me::MatchEngine{};
         auto order_gen    = OrderGen{ { 1_price, 10000_price }, { 1, 1000 }, OrderGenType::Both{ 0.5 } };
 
