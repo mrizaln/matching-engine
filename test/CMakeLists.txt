@@ -36,6 +36,4 @@ function(make_test NAME)
     endif()
 endfunction()
 
-enable_testing()
-
 make_test(match_engine_test)

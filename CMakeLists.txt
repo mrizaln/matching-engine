@@ -8,7 +8,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 option(MATCHING_ENGINE_BUILD_TESTS "Build tests" ON)
-option(MATCHING_ENGINE_RUN_TESTS_AFTER_BUILD "Run tests after build" ON)
+option(MATCHING_ENGINE_RUN_TESTS_AFTER_BUILD "Run tests after build" OFF)
 option(MATCHING_ENGINE_ENABLE_SANITIZERS "Enable sanitizers" ON)
 
 find_package(asio REQUIRED)
@@ -44,5 +44,6 @@ endif()
 # ~~~
 
 if(MATCHING_ENGINE_BUILD_TESTS)
+    enable_testing()
     add_subdirectory(test)
 endif()

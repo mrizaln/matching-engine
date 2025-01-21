@@ -2,7 +2,6 @@
 
 #include "price.hpp"
 
-#include <algorithm>
 #include <atomic>
 #include <chrono>
 #include <queue>
@@ -19,6 +18,14 @@ namespace match_engine
         Buy,
         Sell,
     };
+
+    constexpr std::string_view to_string(OrderType type)
+    {
+        switch (type) {
+        case OrderType::Buy: return "Buy";
+        case OrderType::Sell: return "Sell";
+        }
+    }
 
     class OrderId
     {
@@ -65,7 +72,7 @@ namespace match_engine
         }
     };
 
-    // NOTE: I need a priority queue that allows me to remove an element by its id. inspired by
+    // NOTE: I need a priority queue that allows me to remove an element on the middle. inspired by
     // https://stackoverflow.com/a/36711682/16506263
     class OrderList : public std::priority_queue<Order, std::vector<Order>, OldOrderFirstComp>
     {
@@ -85,7 +92,7 @@ namespace match_engine
             }
 
             std::erase_if(container, [](auto&& order) { return order.m_quantity == 0; });
-            // al::sr::make_heap(container, comp);    // this step might be not necessary
+            // al::sr::make_heap(container, comp);    // this step might not be necessary
         }
     };
 
