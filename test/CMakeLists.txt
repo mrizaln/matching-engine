@@ -37,3 +37,4 @@ function(make_test NAME)
 endfunction()
 
 make_test(match_engine_test)
+make_test(server_test)
