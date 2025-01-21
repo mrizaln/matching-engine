@@ -23,15 +23,9 @@ namespace match_engine
     private:
         std::vector<Order> match_buy_order(Order buy)
         {
-            auto maybe_sell = m_sell_orders.find(buy.m_price);
-            if (maybe_sell == nullptr) {
-                m_buy_orders.add(buy);
-                return {};
-            }
-
             auto successful_sell = std::vector<Order>{};
 
-            maybe_sell->modify([&](Order& sell) {
+            auto count = m_sell_orders.modify(buy.m_price, [&](Order& sell) {
                 if (buy.m_quantity == 0) {
                     return false;
                 }
@@ -46,7 +40,7 @@ namespace match_engine
                 return true;
             });
 
-            if (buy.m_quantity > 0) {
+            if (count == 0 or buy.m_quantity > 0) {
                 m_buy_orders.add(buy);
             }
 
@@ -55,15 +49,9 @@ namespace match_engine
 
         std::vector<Order> match_sell_order(Order sell)
         {
-            auto maybe_buy = m_buy_orders.find(sell.m_price);
-            if (maybe_buy == nullptr) {
-                m_sell_orders.add(sell);
-                return {};
-            }
-
             auto successful_buy = std::vector<Order>{};
 
-            maybe_buy->modify([&](Order& buy) {
+            auto count = m_buy_orders.modify(sell.m_price, [&](Order& buy) {
                 if (sell.m_quantity == 0) {
                     return false;
                 }
@@ -78,7 +66,7 @@ namespace match_engine
                 return true;
             });
 
-            if (sell.m_quantity > 0) {
+            if (count == 0 or sell.m_quantity > 0) {
                 m_sell_orders.add(sell);
             }
 

@@ -3,8 +3,9 @@
 #include "price.hpp"
 
 #include <atomic>
+#include <cassert>
 #include <chrono>
-#include <queue>
+#include <deque>
 #include <type_traits>
 
 namespace match_engine
@@ -24,6 +25,7 @@ namespace match_engine
         switch (type) {
         case OrderType::Buy: return "Buy";
         case OrderType::Sell: return "Sell";
+        default: [[unlikely]] return "???";
         }
     }
 
@@ -72,48 +74,62 @@ namespace match_engine
         }
     };
 
-    // NOTE: I need a priority queue that allows me to remove an element on the middle. inspired by
-    // https://stackoverflow.com/a/36711682/16506263
-    class OrderList : public std::priority_queue<Order, std::vector<Order>, OldOrderFirstComp>
-    {
-    public:
-        // Fn should return true to continue modifying, false to stop immediately
-        template <typename Fn>
-            requires std::invocable<Fn, Order&> and std::same_as<std::invoke_result_t<Fn, Order&>, bool>
-        void modify(Fn&& fn)
-        {
-            auto& container = this->c;
-            // auto& comp      = this->comp;
-
-            for (auto& order : container) {
-                if (not fn(order)) {
-                    break;
-                }
-            }
-
-            std::erase_if(container, [](auto&& order) { return order.m_quantity == 0; });
-            // al::sr::make_heap(container, comp);    // this step might not be necessary
-        }
-    };
-
     class OrderBook
     {
     public:
         void add(Order order)
         {
             auto& orders = m_orders[order.m_price];
-            orders.push(order);
+            orders.push_back(order);
         }
 
-        OrderList* find(Price price)
+        /**
+         * @brief Traverse all orders at a given price and apply a function to each order.
+         *
+         * @tparam Fn The function must return true to continue modifying the order or false to stop.
+         * @param price The price to modify.
+         * @param fn the function to apply to each order.
+         * @return The number of orders modified.
+         */
+        template <typename Fn>
+            requires std::invocable<Fn, Order&> and std::same_as<std::invoke_result_t<Fn, Order&>, bool>
+        al::usize modify(Price price, Fn&& fn)
         {
-            auto orders = m_orders.find(price);
-            return orders != m_orders.end() ? &orders->second : nullptr;
+            auto maybe_orders = m_orders.find(price);
+            if (maybe_orders == m_orders.end()) {
+                return 0;
+            }
+
+            auto& orders = maybe_orders->second;
+            assert(!orders.empty());
+
+            auto it    = orders.begin();
+            auto count = 0_usize;
+
+            while (it != orders.end()) {
+                auto cont = fn(*it);
+                ++count;
+
+                if (it->m_quantity == 0) {
+                    it = orders.erase(it);
+                } else {
+                    if (not cont) {
+                        break;
+                    }
+                    ++it;
+                }
+            }
+
+            if (orders.empty()) {
+                m_orders.erase(maybe_orders);
+            }
+
+            return count;
         }
 
         const auto& inner() const { return m_orders; }
 
     private:
-        std::unordered_map<Price, OrderList> m_orders;
+        std::unordered_map<Price, std::deque<Order>> m_orders;
     };
 }
