@@ -3,9 +3,10 @@
 #include "match_engine.hpp"
 
 #include <boost/ut.hpp>
-#include <fmt/base.h>
+#include <fmt/core.h>
 #include <fmt/format.h>
 
+#include <algorithm>
 #include <random>
 
 namespace ut = boost::ut;
@@ -13,6 +14,7 @@ namespace me = match_engine;
 namespace sr = me::al::sr;
 namespace sv = me::al::sv;
 
+using test_util::fold_left;
 using test_util::order_buy, test_util::order_sell, test_util::orderbook_empty;
 using test_util::OrderGen, test_util::OrderGenType;
 
@@ -172,7 +174,7 @@ int main()
             expect(not orderbook_empty(match_engine.buy_orders()));
 
             expect(that % match_engine.buy_orders().inner().at(buy.m_price).size() == 1);
-            expect(that % match_engine.buy_orders().inner().at(buy.m_price).top().m_quantity == 3);
+            expect(that % match_engine.buy_orders().inner().at(buy.m_price).front().m_quantity == 3);
         };
 
         "should match a sell order with multiple buy orders"_test = [&] {
@@ -194,7 +196,7 @@ int main()
             expect(not orderbook_empty(match_engine.sell_orders()));
 
             expect(that % match_engine.sell_orders().inner().at(sell.m_price).size() == 1);
-            expect(that % match_engine.sell_orders().inner().at(sell.m_price).top().m_quantity == 3);
+            expect(that % match_engine.sell_orders().inner().at(sell.m_price).front().m_quantity == 3);
         };
     };
 
@@ -305,7 +307,7 @@ int main()
             expect(matched[0].m_timestamp < matched[1].m_timestamp);
             expect(matched[1].m_timestamp < sells[2].m_timestamp);
 
-            expect(match_engine.sell_orders().inner().at(10_price).top().m_quantity == 5);
+            expect(match_engine.sell_orders().inner().at(10_price).front().m_quantity == 5);
         };
 
         "a sell order that match multiple buy orders and can fulfill multiple orders"_test = [&] {
@@ -330,14 +332,14 @@ int main()
             expect(matched[0].m_timestamp < matched[1].m_timestamp);
             expect(matched[1].m_timestamp < buys[2].m_timestamp);
 
-            expect(match_engine.buy_orders().inner().at(10_price).top().m_quantity == 5);
+            expect(match_engine.buy_orders().inner().at(10_price).front().m_quantity == 5);
         };
     };
 
     // NOTE: remove the ut::skip to run the test/benchmark
-    ut::skip / "order matching engine should be able to handle high volume trades at high speed"_test = [&] {
+    ut::skip / "matching engine should be able to handle high volume trades at high speed"_test = [&] {
         auto match_engine = me::MatchEngine{};
-        auto order_gen    = OrderGen{ { 1_price, 10000_price }, { 1, 1000 }, OrderGenType::Both{ 0.5 } };
+        auto order_gen    = OrderGen{ { 1_price, 10000_price }, { 1, 10000 }, OrderGenType::Both{ 0.5 } };
 
         auto rng         = std::mt19937{ std::random_device{}() };
         auto order_count = 0ul;
@@ -364,12 +366,17 @@ int main()
         auto elapsed = me::Clock::now() - start;
         auto sec     = std::chrono::duration_cast<std::chrono::duration<double>>(elapsed);
 
+        auto acc_orderlist   = [](auto acc, auto&& list) { return acc + list.second.size(); };
+        auto unmatched_buys  = fold_left(match_engine.buy_orders().inner(), 0ul, acc_orderlist);
+        auto unmatched_sells = fold_left(match_engine.sell_orders().inner(), 0ul, acc_orderlist);
+
         // clang-format off
         fmt::println("Order statistics:");
         fmt::println("\tTotal orders    : {}", order_count);
         fmt::println("\tMatched orders  : {}", match_count);
         fmt::println("\tMatch rate      : {:.2f}%", (static_cast<double>(match_count) / static_cast<double>(order_count)) * 100);
-        fmt::println("\tUnmatched orders: {}", order_count - match_count);
+        fmt::println("\tUnmatched buys  : {}", unmatched_buys);
+        fmt::println("\tUnmatched sells : {}", unmatched_sells);
         fmt::println("\tElapsed time    : {:.2f} seconds", sec.count());
         // clang-format on
     };

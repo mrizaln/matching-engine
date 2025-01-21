@@ -30,7 +30,13 @@ namespace test_util
 
     inline bool orderbook_empty(const me::OrderBook& orders)
     {
-        return sr::all_of(orders.inner() | sv::values, [](auto&& list) { return list.empty(); });
+        return sr::all_of(orders.inner(), [](auto&& list) { return list.second.empty(); });
+    }
+
+    template <typename T, std::ranges::range R, typename Fn>
+    T fold_left(R&& rng, T init, Fn&& fn)
+    {
+        return std::accumulate(std::ranges::begin(rng), std::ranges::end(rng), init, std::forward<Fn>(fn));
     }
 
     struct OrderGenType
