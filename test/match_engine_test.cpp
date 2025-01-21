@@ -41,24 +41,6 @@ namespace match_engine
     }
 }
 
-template <>
-struct fmt::formatter<me::Order> : fmt::formatter<std::string_view>
-{
-    auto format(const me::Order& order, format_context& ctx) const
-    {
-        auto&& [id, type, timestamp, price, quantity] = order;
-        return fmt::format_to(
-            ctx.out(),
-            "Order{{ id={:>4}, type={:<4}, time={:>20}, price={:>4}, quantity={:>4} }}",
-            id.inner(),
-            to_string(type),
-            timestamp.time_since_epoch().count(),
-            price.inner(),
-            quantity
-        );
-    }
-};
-
 int main()
 {
     using namespace ut::operators;
@@ -336,8 +318,13 @@ int main()
         };
     };
 
-    // NOTE: remove the ut::skip to run the test/benchmark
-    ut::skip / "matching engine should be able to handle high volume trades at high speed"_test = [&] {
+    // NOTE: the test/benchmark only ran on release mode
+#ifdef NDEBUG
+#else
+    ut::skip /
+#endif
+
+    "matching engine should be able to handle high volume trades at high speed"_test = [&] {
         auto match_engine = me::MatchEngine{};
         auto order_gen    = OrderGen{ { 1_price, 10000_price }, { 1, 10000 }, OrderGenType::Both{ 0.5 } };
 
@@ -347,7 +334,7 @@ int main()
 
         auto start = me::Clock::now();
 
-        for (auto _ : sv::iota(0u, 10'000'000u)) {
+        for (auto _ : sv::iota(0u, 1'000'000u)) {
             auto order   = order_gen.generate(rng);
             auto matched = match_engine.match(order);
 

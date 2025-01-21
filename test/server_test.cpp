@@ -65,9 +65,7 @@ int main()
         "making it essentially impossible to observe directly.",
     };
 
-    auto client_thread = std::jthread{ client_fun, std::span<std::string_view>{ client_input } };
-
-    client_thread.join();
+    client_fun(client_input);
 
     server.stop();
     server_thread.join();
