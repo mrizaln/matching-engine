@@ -13,19 +13,24 @@ option(MATCHING_ENGINE_ENABLE_SANITIZERS "Enable sanitizers" ON)
 
 find_package(asio REQUIRED)
 find_package(fmt REQUIRED)
+find_package(spdlog REQUIRED)
+find_package(RapidJSON REQUIRED)
 
 # the matching-engine
 # ~~~
-add_library(matching-engine INTERFACE)
-target_include_directories(matching-engine INTERFACE source)
-target_link_libraries(matching-engine INTERFACE asio::asio fmt::fmt)
+add_library(matching-engine STATIC source/server.cpp)
+target_include_directories(matching-engine PUBLIC source)
+target_link_libraries(
+    matching-engine
+    PUBLIC asio::asio fmt::fmt spdlog::spdlog rapidjson
+)
 # ~~~
 
 # the main executable
 # ~~~
 add_executable(main source/main.cpp)
 target_include_directories(main PRIVATE source)
-target_link_libraries(main PRIVATE asio::asio fmt::fmt)
+target_link_libraries(main PRIVATE matching-engine)
 
 if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
     target_compile_options(main PRIVATE -Wall -Wextra -Wconversion)
