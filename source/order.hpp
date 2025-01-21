@@ -2,6 +2,9 @@
 
 #include "price.hpp"
 
+#include <fmt/format.h>
+#include <fmt/std.h>
+
 #include <atomic>
 #include <cassert>
 #include <chrono>
@@ -27,6 +30,16 @@ namespace match_engine
         case OrderType::Sell: return "Sell";
         default: [[unlikely]] return "???";
         }
+    }
+
+    constexpr std::optional<OrderType> order_type_from_str(std::string_view str)
+    {
+        if (str == "sell") {
+            return OrderType::Sell;
+        } else if (str == "buy") {
+            return OrderType::Buy;
+        }
+        return std::nullopt;
     }
 
     class OrderId
@@ -133,3 +146,21 @@ namespace match_engine
         std::unordered_map<Price, std::deque<Order>> m_orders;
     };
 }
+
+template <>
+struct fmt::formatter<match_engine::Order> : fmt::formatter<std::string_view>
+{
+    auto format(const match_engine::Order& order, format_context& ctx) const
+    {
+        auto&& [id, type, timestamp, price, quantity] = order;
+        return fmt::format_to(
+            ctx.out(),
+            "Order {{ id: {0}, type: {1}, timestamp: {2:%FT%TZ}, price: {3}, quantity: {4} }}",
+            id.inner(),
+            match_engine::to_string(type),
+            timestamp,
+            price.inner(),
+            quantity
+        );
+    }
+};

@@ -44,7 +44,7 @@ namespace match_engine
             spdlog::warn("(MessageProtocol) No bytes received! Possible connection loss!");
             co_return std::nullopt;
         } else if (bytes < message_len) {
-            spdlog::warn("(MessageProtocol) Incomplete message received, ignoring...!");
+            spdlog::warn("(MessageProtocol) Incomplete message received, ignoring!");
             co_return std::nullopt;
         } else if (err) {
             spdlog::error("(MessageProtocol) Receive failure: {}", err.message());
