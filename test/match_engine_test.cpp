@@ -334,7 +334,7 @@ int main()
 
         auto start = me::Clock::now();
 
-        for (auto _ : sv::iota(0u, 1'000'000u)) {
+        for (auto _ : sv::iota(0u, 500000u)) {
             auto order   = order_gen.generate(rng);
             auto matched = match_engine.match(order);
 

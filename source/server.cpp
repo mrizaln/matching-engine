@@ -28,10 +28,10 @@ namespace match_engine
         auto len_arr      = NetLongCharArr{};
         auto [err, bytes] = co_await socket.async_receive(async::buffer(len_arr));    // handled later
         if (bytes == 0) {
-            spdlog::warn("(MessageProtocol) No bytes sent! Possible connection loss!");
+            spdlog::warn("(MessageProtocol) No bytes received! Possible connection loss!");
             co_return std::nullopt;
         } else if (err) {
-            spdlog::error("(MessageProtocol) Send failure: {}", err.message());
+            spdlog::error("(MessageProtocol) Receive failure: {}", err.message());
             co_return std::nullopt;
         }
 
