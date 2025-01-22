@@ -5,6 +5,7 @@
 #include <random>
 #include <variant>
 #include <algorithm>
+#include <numeric>
 
 namespace test_util
 {
