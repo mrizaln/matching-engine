@@ -170,6 +170,8 @@ Unit tests performed to tests:
 - matching engine benchmark, and
 - TCP server message protocol implementation.
 
+All the unit tests are using sample orders written in code.
+
 > see the unit tests in [test](test) directory
 
 ### Integration test
@@ -177,3 +179,15 @@ Unit tests performed to tests:
 The integration tests is more difficult that unit tests. At the moment, I haven't done a streamlined integration test for this project due to time constraint. What I have done is creating an order generator script that generates large volume of trades in Python that feeds into the engine through TCP. Using the trades, stress tests performed repeatedly and any error encountered immediately fixed and eliminated.
 
 If it is possible, I would like to streamline this test by creating a predefined stocks list in a text file that then sent to the server. The output of the server then captured in a file or piped. The next step is to compare result to the predefined text file. This is very similar to my unit test, but instead of directly feeding the order to the engine in program in C++, the orders need to go through hoops first before matched. The test will probably using a python script to run the executable project and capture the output from then.
+
+### Order generator
+
+There is a data generator program in the `test` directory. It's a python script that send orders to the matching engine repeatedly in large quantity.
+
+```sh
+./test/server_test_client.py
+
+# python ./test/server_test_client.py     # for non-unix folks (try python3 if python is not found)
+```
+
+> quick link: [here](test/server_test_client.py)
