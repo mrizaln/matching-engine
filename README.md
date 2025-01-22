@@ -91,6 +91,8 @@ The built binary is in the `build/Release` directory,
 ./build/Release/main 8080      # has .exe extension if on Windows
 ```
 
+> If you want build to build the project in debug mode, replace `Release` with `Debug` and `release`with`debug`.
+
 ## Usage
 
 The matching engine is ran as a TCP server, it can receive both buy and sell orders. The engine uses a very simple Message protocol implemented as Length-Value Encoded string. To run the engine, You just need to provide a port number on which the engine will be running on.
@@ -98,6 +100,8 @@ The matching engine is ran as a TCP server, it can receive both buy and sell ord
 ```sh
 ./build/Release/main 8080
 ```
+
+> If you built the project in debug mode, replace `Release` with `Debug`.
 
 ### Connecting
 
@@ -172,7 +176,23 @@ Unit tests performed to tests:
 
 All the unit tests are using sample orders written in code.
 
-> see the unit tests in [test](test) directory
+> - see the unit tests in [test](test) directory
+> - the tests binary are built into `build/Release/test` directory
+
+You can run the unit test using `ctest`
+
+```sh
+ctest --preset conan-release
+```
+
+Or you can directly run the test binaries:
+
+```sh
+./build/Release/test/match_engine_test
+./build/Release/test/server_test
+```
+
+> If you built the project in debug mode, replace `Release` with `Debug`.
 
 ### Integration test
 
@@ -186,8 +206,5 @@ There is a data generator program in the `test` directory. It's a python script 
 
 ```sh
 ./test/server_test_client.py
-
-# python ./test/server_test_client.py     # for non-unix folks (try python3 if python is not found)
+# python ./test/server_test_client.py     # for non-unix folks
 ```
-
-> quick link: [here](test/server_test_client.py)
