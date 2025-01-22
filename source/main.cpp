@@ -21,12 +21,12 @@ int main(int argc, char* argv[])
 
     using match_engine::operator""_u16;
     auto port      = 0_u16;
-    auto [ptr, ec] = std::from_chars(probably_port.data(), probably_port.end(), port);
+    auto [ptr, ec] = std::from_chars(probably_port.data(), probably_port.data() + probably_port.size(), port);
     if (ec != std::errc{}) {
         fmt::println(stderr, "Invalid port '{}': {}", probably_port, std::make_error_code(ec).message());
         fmt::println(stderr, "Usage: {} <port>", argv[0]);
         return 1;
-    } else if (ptr != probably_port.end()) {
+    } else if (ptr != probably_port.data() + probably_port.size()) {
         fmt::println(stderr, "Invalid port '{}': contains non-numeric characters", probably_port);
         fmt::println(stderr, "Usage: {} <port>", argv[0]);
         return 1;
