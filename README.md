@@ -69,7 +69,7 @@ The project dependencies are managed by Conan and constructed using CMake, make 
 The first step is getting all the dependencies from Conan remotes,
 
 ```sh
-conan install . --build missing -s build_type=Debug
+conan install . --build missing -s build_type=Release
 ```
 
 Then the next step is to configure the project using CMake
@@ -91,7 +91,7 @@ The built binary is in the `build/Release` directory,
 ./build/Release/main 8080      # has .exe extension if on Windows
 ```
 
-> If you want build to build the project in debug mode, replace `Release` with `Debug` and `release`with`debug`.
+> If you want build to build the project in debug mode, replace `Release` with `Debug` and `release` with `debug`.
 
 ## Usage
 
