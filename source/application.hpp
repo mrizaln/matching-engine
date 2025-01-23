@@ -20,18 +20,12 @@ public:
     void run()
     {
         m_server.run([&](std::string string) {
-            auto parsed = rapidjson::Document{};
-            parsed.Parse(string.c_str());
-
-            if (parsed.HasParseError()) {
-                spdlog::warn("Received a string that is not in a json format, ignoring...");
-                return;
-            } else if (not parsed.IsObject() and parsed.HasMember("price") and parsed["price"].IsUint64()
-                       and parsed.HasMember("quantity") and parsed["quantity"].IsUint64()
-                       and parsed.HasMember("type") and parsed["type"].IsString()) {
-                spdlog::warn("Received a json object that does not contain price and quantity, ignoring...");
+            auto maybe_json = parse_json(string);
+            if (not maybe_json.has_value()) {
                 return;
             }
+
+            auto& parsed = maybe_json.value();
 
             auto type = match_engine::order_type_from_str(parsed["type"].GetString());
             if (not type.has_value()) {
@@ -41,7 +35,6 @@ public:
                 );
                 return;
             }
-
             auto price    = parsed["price"].GetUint64();
             auto quantity = parsed["quantity"].GetUint64();
 
@@ -69,6 +62,21 @@ public:
     }
 
 private:
+    std::optional<rapidjson::Document> parse_json(std::string_view string) const
+    {
+        auto parsed = rapidjson::Document{};
+        parsed.Parse(string.data(), string.size());
+
+        if (not parsed.HasParseError() and parsed.IsObject() and parsed.HasMember("price")
+            and parsed["price"].IsUint64() and parsed.HasMember("quantity") and parsed["quantity"].IsUint64()
+            and parsed.HasMember("type") and parsed["type"].IsString()) {
+            return parsed;
+        }
+
+        spdlog::warn("Received a string that is not in a correctly formatted json, ignoring...");
+        return std::nullopt;
+    }
+
     match_engine::async::IoContext m_context;
     match_engine::Server           m_server;
     match_engine::MatchEngine      m_engine;
