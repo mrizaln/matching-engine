@@ -139,8 +139,8 @@ def main() -> int:
 
     eprint("closing socket")
 
-    assert sock is not None
-    sock.close()
+    if sock is not None:
+        sock.close()
 
     return 0
 
