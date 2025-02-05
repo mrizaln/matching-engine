@@ -106,8 +106,6 @@ namespace match_engine
                 return 0;
             }
 
-            auto to_be_deleted = std::vector<al::usize>{};
-
             auto& orders = maybe_orders->second;
             assert(!orders.empty());
 
@@ -120,7 +118,7 @@ namespace match_engine
                 ++count;
 
                 if (order.m_quantity == 0) {
-                    to_be_deleted.push_back(i);
+                    m_to_be_deleted.push_back(i);
                 }
                 if (not proceed) {
                     break;
@@ -128,7 +126,8 @@ namespace match_engine
             }
 
             // delete the orders with quantity == 0 in single pass
-            util::erase_by_indices(orders, to_be_deleted);
+            util::erase_by_indices(orders, m_to_be_deleted);
+            m_to_be_deleted.clear();
 
             if (orders.empty()) {
                 m_orders.erase(maybe_orders);
@@ -140,7 +139,10 @@ namespace match_engine
         const auto& inner() const { return m_orders; }
 
     private:
-        std::unordered_map<Price, std::vector<Order>> m_orders;
+        using OrderList = std::vector<Order>;
+
+        std::vector<al::usize>               m_to_be_deleted;
+        std::unordered_map<Price, OrderList> m_orders;
     };
 }
 
