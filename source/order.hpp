@@ -1,6 +1,7 @@
 #pragma once
 
 #include "price.hpp"
+#include "util.hpp"
 
 #include <fmt/format.h>
 #include <fmt/std.h>
@@ -8,7 +9,7 @@
 #include <atomic>
 #include <cassert>
 #include <chrono>
-#include <deque>
+#include <vector>
 #include <type_traits>
 
 namespace match_engine
@@ -79,14 +80,6 @@ namespace match_engine
     static_assert(std::is_trivially_move_assignable_v<Order>);
     static_assert(std::is_trivially_destructible_v<Order>);
 
-    struct OldOrderFirstComp
-    {
-        bool operator()(const Order& lhs, const Order& rhs) const noexcept
-        {
-            return lhs.m_timestamp > rhs.m_timestamp;
-        }
-    };
-
     class OrderBook
     {
     public:
@@ -113,25 +106,29 @@ namespace match_engine
                 return 0;
             }
 
+            auto to_be_deleted = std::vector<al::usize>{};
+
             auto& orders = maybe_orders->second;
             assert(!orders.empty());
 
-            auto it    = orders.begin();
             auto count = 0_usize;
 
-            while (it != orders.end()) {
-                auto cont = fn(*it);
+            for (auto i : al::sv::iota(0_usize, orders.size())) {
+                auto& order = orders[i];
+
+                auto proceed = fn(order);
                 ++count;
 
-                if (it->m_quantity == 0) {
-                    it = orders.erase(it);
-                } else {
-                    if (not cont) {
-                        break;
-                    }
-                    ++it;
+                if (order.m_quantity == 0) {
+                    to_be_deleted.push_back(i);
+                }
+                if (not proceed) {
+                    break;
                 }
             }
+
+            // delete the orders with quantity == 0 in single pass
+            util::erase_by_indices(orders, to_be_deleted);
 
             if (orders.empty()) {
                 m_orders.erase(maybe_orders);
@@ -143,7 +140,7 @@ namespace match_engine
         const auto& inner() const { return m_orders; }
 
     private:
-        std::unordered_map<Price, std::deque<Order>> m_orders;
+        std::unordered_map<Price, std::vector<Order>> m_orders;
     };
 }
 
