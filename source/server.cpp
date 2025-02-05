@@ -37,18 +37,19 @@ namespace match_engine
 
         auto message_len = from_net_long(len_arr);
         auto message     = std::string(message_len, '\0');
+        auto offset      = std::size_t{ 0 };
 
-        // TODO: make sure to handle the case where the message might be not fully received
-        std::tie(err, bytes) = co_await socket.async_receive(async::buffer(message));
-        if (bytes == 0) {
-            spdlog::warn("(MessageProtocol) No bytes received! Possible connection loss!");
-            co_return std::nullopt;
-        } else if (bytes < message_len) {
-            spdlog::warn("(MessageProtocol) Incomplete message received, ignoring!");
-            co_return std::nullopt;
-        } else if (err) {
-            spdlog::error("(MessageProtocol) Receive failure: {}", err.message());
-            co_return std::nullopt;
+        while (offset < message_len) {
+            auto buffer       = async::buffer(message.data() + offset, message.size() - offset);
+            auto [err, bytes] = co_await socket.async_receive(buffer);
+            if (bytes == 0) {
+                spdlog::warn("(MessageProtocol) No bytes received! Possible connection loss!");
+                co_return std::nullopt;
+            } else if (err) {
+                spdlog::error("(MessageProtocol) Receive failure: {}", err.message());
+                co_return std::nullopt;
+            }
+            offset += bytes;
         }
 
         co_return message;
