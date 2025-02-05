@@ -1,6 +1,6 @@
 #pragma once
 
-#include <vector>
+#include <ranges>
 #include <span>
 
 namespace match_engine::util
@@ -13,14 +13,14 @@ namespace match_engine::util
      * @param indices The indices of the elements to delete (sorted in ascending order).
      * @return The number of elements deleted.
      */
-    template <typename T>
-    void erase_by_indices(std::vector<T>& vector, std::span<const std::size_t> indices)
+    template <std::ranges::random_access_range R>
+    void erase_by_indices(R& vector, std::span<const std::size_t> indices)
     {
         if (indices.empty()) {
             return;
         }
 
-        using diff = typename std::vector<T>::difference_type;
+        using diff = typename std::ranges::range_difference_t<R>;
 
         auto write = vector.begin() + static_cast<diff>(indices[0]);
         auto read  = vector.begin() + static_cast<diff>(indices[0]);
